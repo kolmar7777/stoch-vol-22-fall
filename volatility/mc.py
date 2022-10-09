@@ -101,7 +101,7 @@ def monte_carlo(simulator: Callable[[int], NDArray[float_]],
             
             S = simulator(batch_size)
 
-            y = f(S) - theta * control_f if control_f is not None else f(S)
+            y = f(S) - theta * control_f(S) if control_f is not None else f(S)
             
             x  = (x * n + np.mean(y)) / (n + 1)
             
