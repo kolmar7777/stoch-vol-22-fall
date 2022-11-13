@@ -34,7 +34,7 @@ class BlackScholes:
       simulate: Simulates paths.
       monte_carlo: Computes expectation by the Monte-Carlo method.
     """
-    
+
     s: float
     sigma: float
     r: float = 0
@@ -42,7 +42,7 @@ class BlackScholes:
     def _d1(self, t: Floats, k: Floats) -> Floats:
         """Computes `d_1` from the Black-Scholes formula."""
         return (np.log(self.s / k ) + (self.r + 0.5 * self.sigma**2) * t) / (self.sigma * np.sqrt(t))
-    
+
     def _d2(self, t: Floats, k: Floats) -> Floats:
         """Computes `d_2` from the Black-Scholes formula."""
         return self._d1(t, k) - self.sigma * np.sqrt(t)
@@ -136,13 +136,13 @@ class BlackScholes:
           An array `s` of shape `(nsteps+1, npaths)`, where `s[i, j]` is the
           value of `j`-th path at point `t_i`.
         """
-        
+
         dt = t / nsteps
-        
+
         z = (self.r - self.sigma**2 * 0.5) * dt + np.random.standard_normal(size=(nsteps, npaths)) * self.sigma * np.sqrt(dt)
-        
+
         br_motion = np.concatenate([np.zeros((1, npaths)), np.cumsum(z, axis=0)])
-        
+
         return self.s * np.exp(br_motion)
 
 
@@ -180,10 +180,10 @@ def call_price(
     """
     d1 = (np.log(s/k) + (r + 0.5 * sigma**2) * t) / (sigma * np.sqrt(t))
     d2 = d1 - sigma * np.sqrt(t)
-    
+
     return s * st.norm.cdf(d1) - np.exp(-r * t) * k * st.norm.cdf(d2)
 
-   
+
 
 
 # For compatibility
@@ -205,16 +205,16 @@ def _call_iv_approx(
         If `k` is `None`, the Brenner-Subrahmanyam formula is used. If ` k` is
         not `None`, the Corrado-Miller formula is used.
     """
-    
+
     if k is not None:
         x = k * np.exp(-r * t)
         a = np.maximum(0, (c - (s - x)/2)**2 - (s - x)**2 / np.pi)
-        
+
         return np.sqrt(2 * np.pi / t) / (s + x) * (c - (s - x)/2 + np.sqrt(a))
     else:
         return 2.5 * c / (s * np.sqrt(t))
-    
-    
+
+
 def _call_iv_f(
     sigma: Floats,
     s: Floats,
@@ -235,7 +235,7 @@ def _call_iv_fprime(
     k: Floats
 ) -> Floats:
     d1 = (np.log(s/k) + (r + 0.5 * sigma**2) * t) / (sigma * np.sqrt(t))
-    
+
     return s * np.sqrt(t) * st.norm.pdf(d1)
 
 
@@ -272,32 +272,19 @@ def call_iv(
         with grid coordinates, and `c` is a 2-D of option prices.
     """
     iva = _call_iv_approx(s, r, c, t, k)
-    
+
     if iv_approx_bounds is None:
         iva_0 = iva
     else:
         iva_0 = np.minimum(np.maximum(iva, iv_approx_bounds[0]), iv_approx_bounds[1])
-        
-    result = optimize.newton(func = _call_iv_f, 
+
+    result = optimize.newton(func = _call_iv_f,
                              args = (s, r, c, t, k),
                              x0 = iva_0,
                              fprime = _call_iv_fprime,
                              full_output = True)
-    
+
+    if np.isscalar(iva_0):
+        _, result = result
+
     return np.where(result.converged, result.root, np.NaN)
-
-    
-        
-   
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-  
